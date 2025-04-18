@@ -1,0 +1,15 @@
+# 示例配置文件，模拟 miniblog 的配置
+
+# 通用配置
+runmode: debug         # 运行模式，可选：debug, release, test
+server:
+  addr: :8080          # HTTP 服务器监听地址
+  timeout: 10          # 优雅关闭超时时间（秒）
+
+# 日志配置
+log:
+  level: debug         # 日志级别：debug, info, warn, error, dpanic, panic, fatal
+  format: console      # 日志格式：console, json
+  output-paths:        # 日志输出位置
+    - stdout
+    - ./logs/miniexample.log 
