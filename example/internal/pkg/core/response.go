@@ -19,7 +19,14 @@ type Response struct {
 func WriteResponse(c *gin.Context, err error, data interface{}) {
 	if err != nil {
 		code, message := errno.Decode(err)
-		c.JSON(http.StatusOK, Response{
+		httpStatus := http.StatusOK
+
+		// 根据错误类型判断HTTP状态码
+		if e, ok := err.(*errno.Errno); ok {
+			httpStatus = e.ToHTTPStatusCode()
+		}
+
+		c.JSON(httpStatus, Response{
 			Code:    code,
 			Message: message,
 			Data:    data,
