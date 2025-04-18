@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 
 	"example/internal/pkg/log"
+	"example/internal/pkg/middleware"
 )
 
 var cfgFile string
@@ -41,7 +42,7 @@ This is part of the learning project for marmotedu/miniblog.`,
 			log.Init(logOptions())
 			defer log.Sync()
 
-			log.Infow("Starting miniexample application")
+			log.Infow("Starting miniexample application", "version", "v0.1.0")
 			return run()
 		},
 	}
@@ -90,9 +91,11 @@ func initConfig() {
 // logOptions 构建日志配置
 func logOptions() *log.Options {
 	return &log.Options{
-		Level:       viper.GetString("log.level"),
-		Format:      viper.GetString("log.format"),
-		OutputPaths: viper.GetStringSlice("log.output-paths"),
+		Level:             viper.GetString("log.level"),
+		Format:            viper.GetString("log.format"),
+		OutputPaths:       viper.GetStringSlice("log.output-paths"),
+		DisableCaller:     viper.GetBool("log.disable-caller"),
+		DisableStacktrace: viper.GetBool("log.disable-stacktrace"),
 	}
 }
 
@@ -105,10 +108,18 @@ func run() error {
 	g := gin.New()
 
 	// 添加中间件
-	g.Use(gin.Recovery())
+	mws := []gin.HandlerFunc{
+		gin.Recovery(),
+		middleware.NoCache(),
+		middleware.Cors(),
+		middleware.Secure(),
+		middleware.RequestID(),
+	}
+	g.Use(mws...)
 
 	// 注册路由
 	g.GET("/healthz", func(c *gin.Context) {
+		log.C(c).Infow("Healthz function called")
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
