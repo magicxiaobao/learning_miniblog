@@ -66,6 +66,10 @@ var (
 
 	// InternalServerError 用于默认的内部服务器错误
 	InternalServerError = &Errno{Code: 10011, Message: "服务器内部错误", HTTP: http.StatusInternalServerError}
+
+	// 博客文章相关错误, Code 范围为 [20200, 20299]
+	ErrPostNotFound = &Errno{Code: 20200, Message: "文章不存在", HTTP: http.StatusNotFound}
+	ErrPostExists   = &Errno{Code: 20201, Message: "文章已存在", HTTP: http.StatusConflict}
 )
 
 // SetMessage 设置错误消息

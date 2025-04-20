@@ -75,6 +75,9 @@ func (r *Router) Load(g *gin.Engine) {
 					// 这里可以添加仅管理员可访问的用户相关接口
 					// 例如：获取所有用户列表、删除用户等
 				}
+
+				// 用户相关的文章路由
+				users.GET("/:username/posts", r.postCtrl.ListByUser)
 			}
 
 			// 博客文章相关路由
@@ -83,9 +86,13 @@ func (r *Router) Load(g *gin.Engine) {
 				// 创建文章
 				posts.POST("", r.postCtrl.Create)
 
+				// 获取指定文章
+				posts.GET("/:postID", r.postCtrl.Get)
+
+				// 获取文章列表
+				posts.GET("", r.postCtrl.List)
+
 				// 添加更多文章相关API
-				// posts.GET("", r.postCtrl.List)
-				// posts.GET("/:postID", r.postCtrl.Get)
 				// posts.PUT("/:postID", r.postCtrl.Update)
 				// posts.DELETE("/:postID", r.postCtrl.Delete)
 			}
@@ -99,7 +106,6 @@ func (r *Router) Load(g *gin.Engine) {
 // GET    /v1/users/:name - 获取指定用户详情
 // PUT    /v1/users/:name - 更新指定用户
 // DELETE /v1/users/:name - 删除指定用户
-// GET    /v1/users/:name/posts - 获取指定用户的所有博客
 
 // GET    /v1/posts       - 获取文章列表
 // POST   /v1/posts       - 创建文章

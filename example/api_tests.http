@@ -96,4 +96,19 @@ Authorization: Bearer {{token}}
     if (response.body.data && response.body.data.post_id) {
         client.global.set("postID", response.body.data.post_id);
     }
-%} 
+%}
+
+### 获取博客文章
+GET {{host}}/v1/posts/{{postID}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### 获取文章列表
+GET {{host}}/v1/posts?limit=5&offset=0
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### 获取指定用户的文章列表
+GET {{host}}/v1/users/testuser/posts?limit=10
+Accept: application/json
+Authorization: Bearer {{token}} 
