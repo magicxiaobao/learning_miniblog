@@ -19,6 +19,7 @@ import (
 	"example/internal/pkg/auth"
 	"example/internal/pkg/log"
 	"example/internal/pkg/middleware"
+	"example/internal/pkg/schema"
 	"example/internal/router"
 	"example/internal/routers"
 )
@@ -48,6 +49,11 @@ func NewHTTPServer() (*HTTPServer, error) {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %v", err)
+	}
+
+	// 初始化数据库表结构
+	if err := schema.InitTables(db); err != nil {
+		return nil, fmt.Errorf("failed to initialize database tables: %v", err)
 	}
 
 	// 初始化授权组件

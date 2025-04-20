@@ -1,0 +1,81 @@
+### 环境设置
+@host = http://localhost:8080
+@token = 
+@adminToken = 
+
+### 健康检查
+GET {{host}}/healthz
+Accept: application/json
+
+### 用户注册
+POST {{host}}/v1/users
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword123",
+  "nickname": "测试用户",
+  "email": "test@example.com",
+  "phone": "13800138000",
+  "role": "reader"
+}
+
+### 注册管理员用户
+POST {{host}}/v1/users
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123456",
+  "nickname": "管理员",
+  "email": "admin@example.com",
+  "role": "admin"
+}
+
+### 用户登录
+# @name login
+POST {{host}}/v1/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpassword123"
+}
+
+
+> {%
+    if (response.body.data && response.body.data.token) {
+        client.global.set("token", response.body.data.token);
+    }
+%}
+
+### 管理员登录
+# @name adminLogin
+POST {{host}}/v1/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123456"
+}
+
+> {%
+    if (response.body.data && response.body.data.token) {
+        client.global.set("adminToken", response.body.data.token);
+    }
+%}
+
+### 获取当前用户信息
+GET {{host}}/v1/users/testuser
+Accept: application/json
+Authorization: Bearer {{token}}
+
+### 管理员获取其他用户信息
+GET {{host}}/v1/users/testuser
+Accept: application/json
+Authorization: Bearer {{adminToken}}
+
+### 用户登出
+POST {{host}}/v1/logout
+Authorization: Bearer {{token}}
+Content-Type: application/json 
