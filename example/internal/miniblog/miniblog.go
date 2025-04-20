@@ -18,6 +18,7 @@ import (
 
 	"example/internal/pkg/log"
 	"example/internal/pkg/middleware"
+	"example/internal/routers"
 )
 
 var cfgFile string
@@ -114,14 +115,14 @@ func run() error {
 		middleware.Cors(),
 		middleware.Secure(),
 		middleware.RequestID(),
+		middleware.Logger(),
 	}
 	g.Use(mws...)
 
 	// 注册路由
-	g.GET("/healthz", func(c *gin.Context) {
-		log.C(c).Infow("Healthz function called")
-		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-	})
+	if err := routers.InstallRouters(g); err != nil {
+		return err
+	}
 
 	// 启动 HTTP 服务器
 	srv := startServer(g)
