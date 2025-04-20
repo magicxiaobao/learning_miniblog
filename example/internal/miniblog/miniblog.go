@@ -156,7 +156,30 @@ func NewMiniBlogCommand() *cobra.Command {
 // initConfig 读取配置文件
 func initConfig() {
 	configFile := viper.GetString("config")
-	viper.SetConfigFile(configFile)
+
+	// 尝试多个可能的配置文件位置
+	// 1. 直接使用指定的配置文件路径
+	// 2. 尝试从当前目录的上级目录查找
+	// 3. 尝试从当前目录的上上级目录查找（适用于从cmd/miniblog目录运行的情况）
+	possiblePaths := []string{
+		configFile,            // 当前目录
+		"../../" + configFile, // 从cmd/miniblog运行时指向example根目录
+		"../" + configFile,    // 从内部目录运行时
+	}
+
+	configFound := false
+	for _, path := range possiblePaths {
+		if _, err := os.Stat(path); err == nil {
+			viper.SetConfigFile(path)
+			configFound = true
+			break
+		}
+	}
+
+	if !configFound {
+		// 如果所有路径都不存在，仍然使用原始路径，让Viper显示正确的错误
+		viper.SetConfigFile(configFile)
+	}
 
 	// 读取配置文件
 	if err := viper.ReadInConfig(); err != nil {

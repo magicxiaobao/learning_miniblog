@@ -5,6 +5,7 @@ GOTEST=$(GOCMD) test
 GOVET=$(GOCMD) vet
 GOGET=$(GOCMD) get
 BINARY_NAME=miniblog
+MAIN_PATH=cmd/miniblog
 GOFILES=$(shell find . -type f -name "*.go" -not -path "./vendor/*")
 
 # 定义颜色输出
@@ -20,7 +21,7 @@ all: test build
 ## 构建
 build:
 	@echo "${GREEN}==> 构建二进制文件...${RESET}"
-	$(GOBUILD) -o $(BINARY_NAME) -v
+	$(GOBUILD) -o $(BINARY_NAME) -v ./$(MAIN_PATH)
 
 ## 运行
 run:
