@@ -2,6 +2,7 @@
 @host = http://localhost:8080
 @token = 
 @adminToken = 
+@postID = 
 
 ### 健康检查
 GET {{host}}/healthz
@@ -78,4 +79,21 @@ Authorization: Bearer {{adminToken}}
 ### 用户登出
 POST {{host}}/v1/logout
 Authorization: Bearer {{token}}
-Content-Type: application/json 
+Content-Type: application/json
+
+### 创建博客文章
+# @name createPost
+POST {{host}}/v1/posts
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "title": "第一篇博客文章",
+  "content": "这是我的第一篇博客文章内容，Hello World!"
+}
+
+> {%
+    if (response.body.data && response.body.data.post_id) {
+        client.global.set("postID", response.body.data.post_id);
+    }
+%} 

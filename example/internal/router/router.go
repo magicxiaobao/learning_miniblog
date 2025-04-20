@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"example/internal/api/post"
 	"example/internal/api/user"
 	"example/internal/pkg/auth"
 	"example/internal/pkg/middleware"
@@ -14,6 +15,7 @@ type Router struct {
 	db       *gorm.DB
 	authz    *auth.Authz
 	userCtrl *user.Controller
+	postCtrl *post.Controller
 }
 
 // New 创建路由器实例
@@ -22,6 +24,7 @@ func New(db *gorm.DB, authz *auth.Authz) *Router {
 		db:       db,
 		authz:    authz,
 		userCtrl: user.New(db, authz),
+		postCtrl: post.New(db, authz),
 	}
 }
 
@@ -74,7 +77,18 @@ func (r *Router) Load(g *gin.Engine) {
 				}
 			}
 
-			// 这里可以添加其他资源的路由，如博客文章等
+			// 博客文章相关路由
+			posts := auth.Group("/posts")
+			{
+				// 创建文章
+				posts.POST("", r.postCtrl.Create)
+
+				// 添加更多文章相关API
+				// posts.GET("", r.postCtrl.List)
+				// posts.GET("/:postID", r.postCtrl.Get)
+				// posts.PUT("/:postID", r.postCtrl.Update)
+				// posts.DELETE("/:postID", r.postCtrl.Delete)
+			}
 		}
 	}
 }
@@ -86,3 +100,9 @@ func (r *Router) Load(g *gin.Engine) {
 // PUT    /v1/users/:name - 更新指定用户
 // DELETE /v1/users/:name - 删除指定用户
 // GET    /v1/users/:name/posts - 获取指定用户的所有博客
+
+// GET    /v1/posts       - 获取文章列表
+// POST   /v1/posts       - 创建文章
+// GET    /v1/posts/:id   - 获取指定文章详情
+// PUT    /v1/posts/:id   - 更新指定文章
+// DELETE /v1/posts/:id   - 删除指定文章
