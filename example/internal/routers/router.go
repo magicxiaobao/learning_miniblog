@@ -3,6 +3,7 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 
+	"example/internal/pkg/middleware"
 	"example/internal/routers/api/log"
 	"example/internal/routers/api/user"
 )
@@ -18,6 +19,16 @@ func InstallRouters(g *gin.Engine) error {
 	g.GET("/healthz", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
+
+	// 注册演示panic的路由
+	g.GET("/panic", func(c *gin.Context) {
+		names := []string{"Tom", "Jerry"}
+		// 故意制造越界panic
+		c.JSON(200, gin.H{"name": names[99]})
+	})
+
+	// 注册中间件演示路由
+	middleware.ShowMiddlewareDemo(g)
 
 	// 创建 v1 版本的路由组
 	v1 := g.Group("/v1")

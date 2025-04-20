@@ -15,4 +15,7 @@ const (
 
 	// XTokenKey 用于在上下文中存储JWT令牌
 	XTokenKey = "X-Token"
+
+	// XRealIPKey 用于在上下文中存储客户端真实IP
+	XRealIPKey = "X-Real-IP"
 )

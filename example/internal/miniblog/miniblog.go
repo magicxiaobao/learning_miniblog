@@ -110,12 +110,14 @@ func run() error {
 
 	// 添加中间件
 	mws := []gin.HandlerFunc{
-		gin.Recovery(),
-		middleware.NoCache(),
-		middleware.Cors(),
-		middleware.Secure(),
-		middleware.RequestID(),
-		middleware.Logger(),
+		middleware.Recovery(),                          // 1. 恢复中间件，捕获所有 panic
+		middleware.RequestID(),                         // 2. 请求 ID 中间件
+		middleware.Logger(),                            // 3. 日志中间件
+		middleware.TimeoutMiddleware(30 * time.Second), // 4. 超时中间件
+		middleware.RateLimiter(100, 200),               // 5. 限流中间件，每秒 100 个请求，突发最大 200
+		middleware.NoCache(),                           // 6. 禁用缓存中间件
+		middleware.Cors(),                              // 7. CORS 中间件
+		middleware.Secure(),                            // 8. 安全中间件
 	}
 	g.Use(mws...)
 
