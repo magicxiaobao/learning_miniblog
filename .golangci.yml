@@ -1,0 +1,68 @@
+# Miniblog项目的golangci-lint配置
+
+run:
+  deadline: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+
+# 输出配置
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+# 配置全局排除规则
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - dupl
+        - gocyclo
+        - gosec
+
+# 启用的linters
+linters:
+  disable-all: true
+  enable:
+    - deadcode        # 查找未使用的代码
+    - errcheck        # 检查错误处理
+    - gosimple        # 检查可简化的代码
+    - govet           # 检查常见的错误
+    - ineffassign     # 检查无效的赋值
+    - staticcheck     # 执行静态分析
+    - structcheck     # 查找未使用的结构体字段
+    - typecheck       # 执行类型检查
+    - unused          # 查找未使用的变量和函数
+    - misspell        # 检查拼写错误
+    - gofmt           # 检查代码格式
+    - goimports       # 检查导入顺序和格式
+    - gocyclo         # 检查循环复杂度
+    - godot           # 检查注释是否以句点结束
+    - gocognit        # 检查认知复杂度
+    - godox           # 查找TODO/FIXME等标记
+    - whitespace      # 检查多余的空格
+
+# linter特定设置
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  gocyclo:
+    min-complexity: 15
+  gocognit:
+    min-complexity: 20
+  godot:
+    check-all: true
+  govet:
+    check-shadowing: true
+  golint:
+    min-confidence: 0.8
+  misspell:
+    locale: US
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 3
+    min-occurrences: 3 
