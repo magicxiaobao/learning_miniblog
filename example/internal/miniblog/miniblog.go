@@ -21,7 +21,6 @@ import (
 	"example/internal/pkg/middleware"
 	"example/internal/pkg/schema"
 	"example/internal/router"
-	"example/internal/routers"
 )
 
 var cfgFile string
@@ -208,9 +207,8 @@ func run() error {
 	g.Use(mws...)
 
 	// 注册路由
-	if err := routers.InstallRouters(g); err != nil {
-		return err
-	}
+	r := router.New(nil, nil) // 创建一个新的路由器实例
+	r.Load(g)                 // 加载路由
 
 	// 启动 HTTP 服务器
 	srv := startServer(g)
