@@ -14,4 +14,42 @@ log:
   disable-stacktrace: false    # 是否禁止在 panic 及以上级别打印堆栈信息
   output-paths:                # 日志输出位置
     - stdout
-    - ./logs/miniexample.log 
+    - ./logs/miniexample.log
+
+# 数据库配置
+db:
+  # 数据库连接字符串
+  dsn: root:12345678@tcp(localhost:3308)/miniblog?charset=utf8mb4&parseTime=True&loc=Local
+  # 最大打开连接数
+  max-open-conns: 100
+  # 最大空闲连接数
+  max-idle-conns: 10
+  # 连接最大生命周期（分钟）
+  conn-max-lifetime: 60
+
+# JWT配置
+jwt:
+  # 签名密钥
+  key: JnCEIL6CRbnLj6U5PO4nKXJtUZRvDG87
+  # 令牌过期时间（小时）
+  expire: 24
+
+# 限流配置
+ratelimit:
+  # 每秒请求次数限制
+  qps: 100
+  # 允许的最大突发请求数
+  burst: 50
+
+# 认证和授权配置
+auth:
+  # 默认角色
+  default-role: reader
+  # 超级管理员用户列表
+  admin-users:
+    - admin
+  # 预设角色权重（用于基于角色的授权）
+  role-weights:
+    admin: 100
+    editor: 50
+    reader: 10 

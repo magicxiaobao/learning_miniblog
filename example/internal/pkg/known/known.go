@@ -10,6 +10,9 @@ const (
 	// XEmailKey 用于在上下文中存储邮箱
 	XEmailKey = "X-Email"
 
+	// XUserIDKey 用于在上下文中存储用户ID
+	XUserIDKey = "X-UserID"
+
 	// XRoleKey 用于在上下文中存储角色
 	XRoleKey = "X-Role"
 

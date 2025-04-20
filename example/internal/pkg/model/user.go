@@ -10,6 +10,7 @@ type UserM struct {
 	Nickname  string    `gorm:"column:nickname"`
 	Email     string    `gorm:"column:email"`
 	Phone     string    `gorm:"column:phone"`
+	Role      string    `gorm:"column:role;default:reader"` // 用户角色
 	CreatedAt time.Time `gorm:"column:createdAt"`
 	UpdatedAt time.Time `gorm:"column:updatedAt"`
 }

@@ -16,6 +16,7 @@ type Options struct {
 	OutputPaths       []string // 日志输出路径
 	DisableCaller     bool     // 是否禁用调用者信息
 	DisableStacktrace bool     // 是否禁用堆栈跟踪
+	ErrorOutputPaths  []string // 错误输出路径
 }
 
 // NewOptions 创建一个带有默认值的 Options 对象
@@ -26,15 +27,22 @@ func NewOptions() *Options {
 		Level:             "info",
 		Format:            "console",
 		OutputPaths:       []string{"stdout"},
+		ErrorOutputPaths:  []string{"stderr"},
 	}
 }
 
-var (
-	mu     sync.Mutex
-	logger *Logger
-)
+// StdLogger represents the global logger.
+var StdLogger = &Logger{
+	level:             "info",
+	format:            "console",
+	outputs:           []string{"stdout"},
+	disableCaller:     false,
+	disableStacktrace: false,
+}
 
-// Logger 是一个简单的日志记录器，模拟 zap 日志库的行为
+var mu sync.Mutex
+
+// Logger 是一个简单的日志记录器
 type Logger struct {
 	level             string
 	format            string
@@ -43,66 +51,45 @@ type Logger struct {
 	disableStacktrace bool
 }
 
-// Init 初始化日志系统
-func Init(opts *Options) {
+// Init initializes the logger with the given options.
+func Init(opts *Options) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	// 如果没有提供日志级别，默认为 info
-	level := "info"
-	if opts != nil && opts.Level != "" {
-		level = opts.Level
+	// Set default options if not specified
+	if opts == nil {
+		opts = NewOptions()
 	}
 
-	// 如果没有指定输出路径，默认输出到标准输出
-	outputs := []string{"stdout"}
-	if opts != nil && len(opts.OutputPaths) > 0 {
-		outputs = opts.OutputPaths
+	// Initialize the standard logger
+	StdLogger.level = strings.ToLower(opts.Level)
+	StdLogger.format = strings.ToLower(opts.Format)
+	StdLogger.disableCaller = opts.DisableCaller
+	StdLogger.disableStacktrace = opts.DisableStacktrace
+
+	// Set output paths
+	if len(opts.OutputPaths) > 0 {
+		StdLogger.outputs = opts.OutputPaths
 	}
 
-	format := "console"
-	if opts != nil && opts.Format != "" {
-		format = opts.Format
-	}
-
-	disableCaller := false
-	if opts != nil {
-		disableCaller = opts.DisableCaller
-	}
-
-	disableStacktrace := false
-	if opts != nil {
-		disableStacktrace = opts.DisableStacktrace
-	}
-
-	logger = &Logger{
-		level:             level,
-		format:            format,
-		outputs:           outputs,
-		disableCaller:     disableCaller,
-		disableStacktrace: disableStacktrace,
-	}
-
-	fmt.Println("Log system initialized with level:", level)
+	return nil
 }
 
-// Sync 将缓存中的日志刷新到持久化存储中
+// Sync flushes any buffered log entries.
 func Sync() error {
-	// 在真实实现中，这里会调用底层日志库的 Sync 方法
-	// 在这个简化版本中，我们只是模拟这个行为
-	fmt.Println("Log sync called")
+	// Since we're using a simple logger without buffering, this is a no-op
 	return nil
 }
 
 // C 返回带有请求上下文的日志记录器，用于追踪请求
 func C(ctx interface{}) *Logger {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
 
 	// 在实际项目中，这里会将请求ID等信息添加到日志记录器中
-	return logger
+	return StdLogger
 }
 
 // Infow 是 Logger 实例的方法，用于记录 info 级别的结构化日志
@@ -136,7 +123,7 @@ func (l *Logger) Fatalw(msg string, keysAndValues ...interface{}) {
 
 // Infow 记录 info 级别的结构化日志
 func Infow(msg string, keysAndValues ...interface{}) {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
@@ -146,7 +133,7 @@ func Infow(msg string, keysAndValues ...interface{}) {
 
 // Errorw 记录 error 级别的结构化日志
 func Errorw(msg string, keysAndValues ...interface{}) {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
@@ -156,7 +143,7 @@ func Errorw(msg string, keysAndValues ...interface{}) {
 
 // Fatalw 记录 fatal 级别的结构化日志，并终止程序
 func Fatalw(msg string, keysAndValues ...interface{}) {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
@@ -167,20 +154,20 @@ func Fatalw(msg string, keysAndValues ...interface{}) {
 
 // Debugw 记录 debug 级别的结构化日志
 func Debugw(msg string, keysAndValues ...interface{}) {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
 
 	// 只有在 debug 级别时才输出
-	if logger.level == "debug" {
+	if StdLogger.level == "debug" {
 		logMessage(os.Stdout, "DEBUG", msg, keysAndValues...)
 	}
 }
 
 // Warnw 记录 warn 级别的结构化日志
 func Warnw(msg string, keysAndValues ...interface{}) {
-	if logger == nil {
+	if StdLogger == nil {
 		// 默认初始化
 		Init(nil)
 	}
@@ -188,13 +175,13 @@ func Warnw(msg string, keysAndValues ...interface{}) {
 	logMessage(os.Stdout, "WARN", msg, keysAndValues...)
 }
 
-// logMessage 格式化并输出日志消息
+// logMessage logs a message with the given level and key-value pairs
 func logMessage(output *os.File, level, msg string, keysAndValues ...interface{}) {
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
 
 	// 获取调用者信息
 	var caller string
-	if !logger.disableCaller {
+	if !StdLogger.disableCaller {
 		_, file, line, ok := runtime.Caller(2)
 		if ok {
 			// 获取文件名的短路径
@@ -224,7 +211,7 @@ func logMessage(output *os.File, level, msg string, keysAndValues ...interface{}
 	fmt.Fprintln(output)
 
 	// 如果是错误或致命错误且启用了堆栈跟踪，则打印堆栈
-	if (level == "ERROR" || level == "FATAL") && !logger.disableStacktrace {
+	if (level == "ERROR" || level == "FATAL") && !StdLogger.disableStacktrace {
 		// 简单的堆栈跟踪实现
 		buf := make([]byte, 4096)
 		n := runtime.Stack(buf, false)
