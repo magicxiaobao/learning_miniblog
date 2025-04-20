@@ -15,6 +15,11 @@ log:
   output-paths:                # 日志输出位置
     - stdout
     - ./logs/miniexample.log
+  rotate:                      # 日志轮转配置
+    max-size: 10               # 单个日志文件最大大小（MB）
+    max-age: 7                 # 日志文件最大保留天数
+    max-backups: 10            # 最大保留的日志文件数
+    compress: false            # 是否压缩旧的日志文件
 
 # 数据库配置
 db:

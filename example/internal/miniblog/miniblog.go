@@ -177,6 +177,12 @@ func logOptions() *log.Options {
 		OutputPaths:       viper.GetStringSlice("log.output-paths"),
 		DisableCaller:     viper.GetBool("log.disable-caller"),
 		DisableStacktrace: viper.GetBool("log.disable-stacktrace"),
+		RotateConfig: &log.RotateConfig{
+			MaxSize:    viper.GetInt("log.rotate.max-size"),
+			MaxAge:     viper.GetInt("log.rotate.max-age"),
+			MaxBackups: viper.GetInt("log.rotate.max-backups"),
+			Compress:   viper.GetBool("log.rotate.compress"),
+		},
 	}
 }
 

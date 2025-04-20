@@ -11,12 +11,13 @@ import (
 
 // Options 包含配置日志的选项
 type Options struct {
-	Level             string   // 日志级别
-	Format            string   // 日志格式 (json 或 console)
-	OutputPaths       []string // 日志输出路径
-	DisableCaller     bool     // 是否禁用调用者信息
-	DisableStacktrace bool     // 是否禁用堆栈跟踪
-	ErrorOutputPaths  []string // 错误输出路径
+	Level             string        // 日志级别
+	Format            string        // 日志格式 (json 或 console)
+	OutputPaths       []string      // 日志输出路径
+	DisableCaller     bool          // 是否禁用调用者信息
+	DisableStacktrace bool          // 是否禁用堆栈跟踪
+	ErrorOutputPaths  []string      // 错误输出路径
+	RotateConfig      *RotateConfig // 日志轮转配置
 }
 
 // NewOptions 创建一个带有默认值的 Options 对象
@@ -28,6 +29,7 @@ func NewOptions() *Options {
 		Format:            "console",
 		OutputPaths:       []string{"stdout"},
 		ErrorOutputPaths:  []string{"stderr"},
+		RotateConfig:      DefaultRotateConfig(),
 	}
 }
 
@@ -70,6 +72,11 @@ func Init(opts *Options) error {
 	// Set output paths
 	if len(opts.OutputPaths) > 0 {
 		StdLogger.outputs = opts.OutputPaths
+	}
+
+	// 配置日志轮转
+	if opts.RotateConfig != nil {
+		GetRotateManager().Configure(opts.RotateConfig)
 	}
 
 	return nil
@@ -194,27 +201,57 @@ func logMessage(output *os.File, level, msg string, keysAndValues ...interface{}
 	}
 
 	// 基础日志格式
-	fmt.Fprintf(output, "[%s] [%s]%s %s", timestamp, level, caller, msg)
+	logEntry := fmt.Sprintf("[%s] [%s]%s %s", timestamp, level, caller, msg)
 
 	// 处理键值对参数
 	if len(keysAndValues) > 0 {
 		// 打印键值对
 		for i := 0; i < len(keysAndValues); i += 2 {
 			if i+1 < len(keysAndValues) {
-				fmt.Fprintf(output, " %v=%v", keysAndValues[i], keysAndValues[i+1])
+				logEntry += fmt.Sprintf(" %v=%v", keysAndValues[i], keysAndValues[i+1])
 			} else {
-				fmt.Fprintf(output, " %v=MISSING_VALUE", keysAndValues[i])
+				logEntry += fmt.Sprintf(" %v=MISSING_VALUE", keysAndValues[i])
 			}
 		}
 	}
 
-	fmt.Fprintln(output)
+	logEntry += "\n"
 
-	// 如果是错误或致命错误且启用了堆栈跟踪，则打印堆栈
+	// 写入标准输出/错误
+	fmt.Fprint(output, logEntry)
+
+	// 创建堆栈跟踪(如果需要)
+	var stackTrace string
 	if (level == "ERROR" || level == "FATAL") && !StdLogger.disableStacktrace {
 		// 简单的堆栈跟踪实现
 		buf := make([]byte, 4096)
 		n := runtime.Stack(buf, false)
-		fmt.Fprintf(output, "Stack trace:\n%s\n", buf[:n])
+		stackTrace = fmt.Sprintf("Stack trace:\n%s\n", buf[:n])
+
+		// 在控制台打印堆栈
+		fmt.Fprint(output, stackTrace)
+	}
+
+	// 写入文件
+	for _, path := range StdLogger.outputs {
+		if path != "stdout" && path != "stderr" {
+			// 确保日志目录存在
+			dir := path[:strings.LastIndex(path, "/")]
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				fmt.Fprintf(os.Stderr, "Error creating log directory: %v\n", err)
+				continue
+			}
+
+			// 准备写入的完整日志内容
+			fileContent := logEntry
+			if stackTrace != "" {
+				fileContent += stackTrace
+			}
+
+			// 使用轮转管理器写入日志
+			if err := GetRotateManager().Write(path, []byte(fileContent)); err != nil {
+				fmt.Fprintf(os.Stderr, "Error writing to log file: %v\n", err)
+			}
+		}
 	}
 }
